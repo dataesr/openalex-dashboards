@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baromètre OA éditeurs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : barre de filtres en tête, puis synthèse chiffrée, décomposition, évolution annuelle */
+:root{
+  --bg:#f6f7f5; --panel:#ffffff; --fg:#1d2320; --muted:#5d6862; --line:#dde2de; --accent:#1f6f5c;
+  --diamond:#3a8fc7; --gold:#e3b420; --hybrid:#e07b39; --green:#3f9d5a; --bronze:#a8683a; --closed:#b9c0bc;
+  --display:"Fraunces", Georgia, serif; --body:"Public Sans", system-ui, sans-serif; --mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141816; --panel:#1c211f; --fg:#e6ebe8; --muted:#9aa6a0; --line:#2e3532; --accent:#5cc2a5; --closed:#4d5652; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141816; --panel:#1c211f; --fg:#e6ebe8; --muted:#9aa6a0; --line:#2e3532; --accent:#5cc2a5; --closed:#4d5652; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--body)}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:grid;gap:22px}
+.wrap > *{min-width:0}
+header h1{font:600 clamp(1.6rem,3.5vw,2.2rem)/1.15 var(--display);margin:0 0 6px;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;align-items:end}
+label{display:grid;gap:5px;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+input,select,button{font:inherit;font-size:.95rem;text-transform:none;letter-spacing:0}
+input,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.years{display:flex;gap:6px;align-items:center}.years span{color:var(--muted)}
+.check{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-weight:500;font-size:.9rem;color:var(--fg);padding-bottom:8px}
+.check input{width:auto}
+.pub{position:relative}
+.sugg{position:absolute;z-index:5;top:100%;left:0;right:0;margin:4px 0 0;padding:4px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 18px rgb(0 0 0/.12);max-height:260px;overflow:auto}
+.sugg li{padding:6px 8px;border-radius:4px;cursor:pointer;font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--fg)}
+.sugg li small{color:var(--muted);font-family:var(--mono)}
+.sugg li:hover,.sugg li[aria-selected="true"]{background:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:3px 11px;font-size:.82rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.btn{background:var(--accent);color:var(--panel);border:0;border-radius:6px;padding:9px 18px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.status{color:var(--muted);font-size:.88rem}
+.status.err{color:#c0392b}
+details{font-size:.88rem;color:var(--muted);margin-top:12px}
+details .filters{margin-top:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.kpi .v{font:600 2.2rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi .l{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.kpi .s{font-size:.85rem;color:var(--muted)}
+.kpi.main .v{color:var(--accent);font-size:2.8rem}
+h2{font:600 1.2rem/1.2 var(--display);margin:0 0 4px}
+.sub{color:var(--muted);font-size:.88rem;margin:0 0 14px}
+.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--closed)}
+.bar div{min-width:0;transition:flex-grow .4s}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.def{white-space:normal;text-align:left;color:var(--muted);font-size:.85rem;min-width:220px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.years-chart{display:grid;gap:8px}
+.yrow{display:grid;grid-template-columns:52px 1fr 64px;gap:10px;align-items:center;font-variant-numeric:tabular-nums}
+.yrow .y{font-family:var(--mono);font-size:.88rem;color:var(--muted)}
+.yrow .r{font-weight:600;text-align:right}
+.yrow .bar{height:22px;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;margin-top:12px}
+.mono{font-family:var(--mono);font-size:.8rem;word-break:break-all;color:var(--muted)}
+.mono a{color:var(--accent)}
+footer{color:var(--muted);font-size:.82rem;max-width:80ch}
+footer a{color:var(--accent)}
+.busy{opacity:.45;transition:opacity .2s}
+.scopebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.scope-label{font-size:.85rem;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;color:var(--fg);padding:6px 14px;cursor:pointer;font-size:.88rem}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel);font-weight:600}
+.when{text-transform:none;letter-spacing:0;font-weight:500;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+h2 .when{font-size:.85rem}
+.chart-scroll{overflow-x:auto;margin-top:14px}
+.vchart{--h:260px;display:grid;grid-template-columns:40px 1fr;column-gap:8px;min-width:var(--minw,0)}
+.yaxis{position:relative;height:var(--h);margin-top:24px}
+.yaxis span{position:absolute;right:0;transform:translateY(50%);font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.plot{position:relative;height:var(--h);margin-top:24px;display:flex;gap:clamp(4px,1.5%,14px);align-items:stretch;border-bottom:1px solid var(--muted)}
+.grid{position:absolute;left:0;right:0;border-top:1px dashed var(--line);pointer-events:none}
+.col{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column-reverse}
+.col .seg-v{min-height:0;cursor:pointer;outline-offset:-2px}
+.col .seg-v:hover,.col .seg-v:focus-visible{filter:brightness(1.12);outline:2px solid var(--fg)}
+.col .rate{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-size:.78rem;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default}
+.xlab{display:flex;gap:clamp(4px,1.5%,14px);grid-column:2;padding-top:6px}
+.xlab span{flex:1 1 0;min-width:0;text-align:center;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--fg);color:var(--bg);border-radius:6px;padding:8px 11px;font-size:.84rem;line-height:1.45;max-width:260px;box-shadow:0 6px 18px rgb(0 0 0/.2);font-variant-numeric:tabular-nums}
+.tip b{display:block;margin-bottom:2px}
+@media (prefers-reduced-motion:reduce){.bar div{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Baromètre de l'accès ouvert par éditeur</h1>
+  <p>Part des publications en accès ouvert et répartition par statut OA (diamant, gold, hybride, green, bronze, fermé), calculées en direct depuis OpenAlex.</p>
+</header>
+
+<section class="panel" aria-label="Filtres">
+  <div class="filters">
+    <label class="pub" for="pubInput">Éditeur
+      <input id="pubInput" autocomplete="off" placeholder="Rechercher un éditeur…" value="Elsevier BV" role="combobox" aria-expanded="false" aria-controls="pubSugg">
+      <ul id="pubSugg" class="sugg" role="listbox" hidden></ul>
+    </label>
+    <label for="country">Pays (affiliations)
+      <select id="country"></select>
+    </label>
+    <label>Années de publication
+      <span class="years">
+        <input id="y1" type="number" min="1950" max="2030" value="2010" aria-label="Année de début">
+        <span>–</span>
+        <input id="y2" type="number" min="1950" max="2030" value="2025" aria-label="Année de fin">
+      </span>
+    </label>
+    <label class="check" for="articlesOnly"><input id="articlesOnly" type="checkbox"> Articles uniquement</label>
+  </div>
+  <div class="chips" id="pubChips" aria-label="Éditeurs fréquents"></div>
+  <details>
+    <summary>Clé API OpenAlex (facultative)</summary>
+    <p>Sans clé, OpenAlex accorde un petit budget quotidien par adresse IP. Une clé gratuite (compte sur openalex.org) le multiplie par dix. Elle reste enregistrée dans votre navigateur uniquement.</p>
+    <div class="filters">
+      <label for="apiKey">Clé API<input id="apiKey" type="password" placeholder="api_key"></label>
+    </div>
+  </details>
+  <div class="actions">
+    <button class="btn" id="run" type="button">Calculer</button>
+    <button class="btn ghost" id="share" type="button">Copier le lien de cette vue</button>
+    <span class="status" id="status" role="status"></span>
+  </div>
+</section>
+
+<main id="results" class="wrap" style="padding:0">
+  <div class="scopebar">
+    <span class="scope-label">Chiffres clés et tableau :</span>
+    <div class="seg" role="group" aria-label="Période des chiffres clés">
+      <button type="button" id="scopeLast" aria-pressed="true">Dernière année</button>
+      <button type="button" id="scopeAll" aria-pressed="false">Toute la période</button>
+    </div>
+  </div>
+  <section class="kpis">
+    <div class="panel kpi main"><div class="l">Taux d'accès ouvert <span class="when" data-when></span></div><div class="v" id="kRate">–</div><div class="s" id="kRateSub">&nbsp;</div></div>
+    <div class="panel kpi"><div class="l">Publications <span class="when" data-when></span></div><div class="v" id="kTotal">–</div><div class="s" id="kTotalSub">&nbsp;</div></div>
+    <div class="panel kpi"><div class="l">Tous éditeurs, même périmètre</div><div class="v" id="kBench">–</div><div class="s" id="kBenchSub">&nbsp;</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Évolution annuelle par statut OA</h2>
+    <p class="sub">Part de chaque statut dans les publications de l'année. Taux d'accès ouvert au-dessus de chaque colonne. Survolez ou touchez un segment pour le détail.</p>
+    <div class="legend" id="legend"></div>
+    <div class="chart-scroll"><div class="vchart" id="yearChart"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Détail par statut OA <span class="when" data-when></span></h2>
+    <p class="sub">Statut <code>oa_status</code> attribué par OpenAlex à chaque publication.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Statut</th><th>Publications</th><th>Part</th><th>Définition</th></tr></thead>
+        <tbody id="decBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Requête OpenAlex</h2>
+    <p class="mono" id="apiUrl"></p>
+  </section>
+</main>
+
+<footer>
+  Source : <a href="https://openalex.org" target="_blank" rel="noopener">OpenAlex</a> (données ouvertes CC0), interrogé à chaque calcul. L'éditeur est celui de la source principale de la publication (<code>primary_location.source.publisher_lineage</code>, filiales incluses). Le pays correspond aux affiliations d'au moins un auteur (<code>authorships.countries</code>) : une publication co-signée par plusieurs pays compte pour chacun. Taux OA = publications dont le statut n'est pas « fermé » ÷ total.
+</footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<script>
+const API = "https://api.openalex.org";
+const STATUSES = [
+  {k:"diamond", n:"Diamant", d:"Revue entièrement OA, sans frais de publication (APC)."},
+  {k:"gold",    n:"Gold",    d:"Revue entièrement OA, généralement avec APC."},
+  {k:"hybrid",  n:"Hybride", d:"Article ouvert sous licence dans une revue sur abonnement."},
+  {k:"green",   n:"Green",   d:"Version libre uniquement en archive ouverte (HAL, PMC…)."},
+  {k:"bronze",  n:"Bronze",  d:"Lisible gratuitement chez l'éditeur, sans licence ouverte."},
+  {k:"closed",  n:"Fermé",   d:"Aucune version en accès libre repérée."}
+];
+const PRESETS = [
+  {id:"P4310320990", name:"Elsevier BV"},
+  {q:"Springer Nature"}, {q:"Wiley"}, {q:"Taylor & Francis"}, {q:"MDPI"},
+  {q:"Frontiers Media"}, {q:"SAGE Publishing"}, {q:"Oxford University Press"}, {q:"IEEE"}
+];
+const COUNTRIES = "FR DE GB US CN JP IN IT ES NL BE CH CA AU BR KR SE DK NO FI AT PT PL IE IL RU TR IR SA EG ZA NG KE MA TN DZ SN CI CM MX AR CL CO PE NZ SG MY TH ID VN PH PK BD GR CZ HU RO SK SI HR RS BG UA LT LV EE LU IS QA AE".split(" ");
+const nf = new Intl.NumberFormat("fr-FR");
+const pf = v => (v*100).toLocaleString("fr-FR",{minimumFractionDigits:1,maximumFractionDigits:1})+" %";
+const $ = id => document.getElementById(id);
+
+let publisher = {id:"P4310320990", name:"Elsevier BV"};
+
+// --- pays
+(function(){
+  let dn; try{ dn = new Intl.DisplayNames(["fr"],{type:"region"}); }catch(e){}
+  const opts = COUNTRIES.map(c=>({c, n: dn ? dn.of(c) : c})).sort((a,b)=>a.n.localeCompare(b.n,"fr"));
+  $("country").innerHTML = `<option value="">Monde (tous pays)</option>` + opts.map(o=>`<option value="${o.c}">${o.n}</option>`).join("");
+})();
+
+// --- clé API (confort local)
+try{ $("apiKey").value = localStorage.getItem("oa_api_key")||""; }catch(e){}
+$("apiKey").addEventListener("change",()=>{ try{ localStorage.setItem("oa_api_key",$("apiKey").value.trim()); }catch(e){} });
+
+function withKey(url){
+  const k = $("apiKey").value.trim();
+  return k ? url + (url.includes("?")?"&":"?") + "api_key=" + encodeURIComponent(k) : url;
+}
+async function getJSON(url){
+  const r = await fetch(withKey(url));
+  if(r.status===429) throw new Error("Quota OpenAlex atteint (429). Réessayez plus tard ou ajoutez une clé API gratuite.");
+  if(!r.ok) throw new Error(`OpenAlex a répondu ${r.status}. Vérifiez les filtres.`);
+  return r.json();
+}
+
+// --- éditeurs : puces et recherche
+function renderChips(){
+  $("pubChips").innerHTML = `<button class="chip" type="button" data-all="1" aria-pressed="${publisher===null}">Tous éditeurs</button>` +
+    PRESETS.map((p,i)=>`<button class="chip" type="button" data-i="${i}" aria-pressed="${!!(publisher && p.id && p.id===publisher.id) || (publisher && !p.id && publisher.name && publisher.name.toLowerCase().startsWith(p.q.toLowerCase().split(" ")[0]))}">${p.name||p.q}</button>`).join("");
+}
+$("pubChips").addEventListener("click", async e=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  if(b.dataset.all){ publisher=null; $("pubInput").value=""; renderChips(); run(); return; }
+  const p = PRESETS[+b.dataset.i];
+  if(p.id){ publisher={id:p.id,name:p.name}; }
+  else{
+    setStatus("Recherche de l'éditeur…");
+    try{
+      const j = await getJSON(`${API}/autocomplete/publishers?q=${encodeURIComponent(p.q)}`);
+      const r = j.results && j.results[0];
+      if(!r){ setStatus(`Éditeur « ${p.q} » introuvable.`,true); return; }
+      p.id = r.id.split("/").pop(); p.name = r.display_name;
+      publisher = {id:p.id,name:p.name};
+    }catch(err){ setStatus(err.message,true); return; }
+  }
+  $("pubInput").value = publisher.name; renderChips(); run();
+});
+
+let tmr, sel=-1, items=[];
+$("pubInput").addEventListener("input", ()=>{
+  clearTimeout(tmr);
+  const q = $("pubInput").value.trim();
+  if(q.length<2){ closeSugg(); return; }
+  tmr = setTimeout(async()=>{
+    try{
+      const j = await getJSON(`${API}/autocomplete/publishers?q=${encodeURIComponent(q)}`);
+      items = (j.results||[]).slice(0,8); sel=-1;
+      const ul = $("pubSugg");
+      ul.innerHTML = items.map((r,i)=>`<li role="option" data-i="${i}">${esc(r.display_name)} <small>${r.works_count?nf.format(r.works_count)+" pub.":""}</small></li>`).join("") || `<li>Aucun résultat</li>`;
+      ul.hidden=false; $("pubInput").setAttribute("aria-expanded","true");
+    }catch(err){ setStatus(err.message,true); }
+  },250);
+});
+$("pubInput").addEventListener("keydown", e=>{
+  const ul=$("pubSugg"); if(ul.hidden) return;
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); sel=(sel+(e.key==="ArrowDown"?1:-1)+items.length)%items.length; [...ul.children].forEach((li,i)=>li.setAttribute("aria-selected",i===sel)); }
+  else if(e.key==="Enter"&&sel>=0){ e.preventDefault(); pick(sel); }
+  else if(e.key==="Escape") closeSugg();
+});
+$("pubSugg").addEventListener("mousedown", e=>{ const li=e.target.closest("li[data-i]"); if(li){ e.preventDefault(); pick(+li.dataset.i); }});
+$("pubInput").addEventListener("blur", ()=>setTimeout(closeSugg,120));
+function pick(i){ const r=items[i]; publisher={id:r.id.split("/").pop(),name:r.display_name}; $("pubInput").value=r.display_name; closeSugg(); renderChips(); run(); }
+function closeSugg(){ $("pubSugg").hidden=true; $("pubInput").setAttribute("aria-expanded","false"); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// --- calcul
+function baseFilters({withPublisher=true, year=null}={}){
+  const f=[];
+  const y1=+$("y1").value, y2=+$("y2").value;
+  f.push(year ? `publication_year:${year}` : `publication_year:${Math.min(y1,y2)}-${Math.max(y1,y2)}`);
+  if($("articlesOnly").checked) f.push("type:article");
+  if($("country").value) f.push(`authorships.countries:${$("country").value.toLowerCase()}`);
+  if(withPublisher && publisher) f.push(`primary_location.source.publisher_lineage:${publisher.id}`);
+  return f.join(",");
+}
+const groupUrl = filter => `${API}/works?filter=${filter}&group_by=oa_status`;
+function tally(j){
+  const c = Object.fromEntries(STATUSES.map(s=>[s.k,0]));
+  for(const g of (j.group_by||[])){ const k=String(g.key).toLowerCase(); if(k in c) c[k]+=g.count; }
+  const total = Object.values(c).reduce((a,b)=>a+b,0);
+  return {c,total,oa:total-c.closed};
+}
+function setStatus(t,err=false){ $("status").textContent=t; $("status").classList.toggle("err",err); }
+
+let runId=0;
+async function run(){
+  const id=++runId;
+  const y1=Math.min(+$("y1").value,+$("y2").value), y2=Math.max(+$("y1").value,+$("y2").value);
+  if(!y1||!y2){ setStatus("Indiquez une période valide.",true); return; }
+  if(y2-y1>40){ setStatus("Période limitée à 40 ans.",true); return; }
+  syncUrl();
+  setStatus("Interrogation d'OpenAlex…"); $("results").classList.add("busy");
+  try{
+    const years=[]; for(let y=y1;y<=y2;y++) years.push(y);
+    const mainUrl = groupUrl(baseFilters());
+    // un appel par statut OA, ventilé par année : les colonnes correspondent exactement à la période saisie
+    const byYear = st => getJSON(`${API}/works?filter=${baseFilters()},oa_status:${st}&group_by=publication_year`);
+    const [bench, benchLast, ...perStatus] = await Promise.all([
+      publisher ? getJSON(groupUrl(baseFilters({withPublisher:false}))) : Promise.resolve(null),
+      publisher ? getJSON(groupUrl(baseFilters({withPublisher:false, year:y2}))) : Promise.resolve(null),
+      ...STATUSES.map(s=>byYear(s.k))
+    ]);
+    if(id!==runId) return;
+    const yrs = years.map(y=>{
+      const c={};
+      STATUSES.forEach((s,i)=>{ const g=(perStatus[i].group_by||[]).find(g=>+g.key===y); c[s.k]=g?g.count:0; });
+      const total=Object.values(c).reduce((a,b)=>a+b,0);
+      return {y,c,total,oa:total-c.closed};
+    });
+    const sum = {c:Object.fromEntries(STATUSES.map(s=>[s.k,yrs.reduce((a,r)=>a+r.c[s.k],0)]))};
+    sum.total=Object.values(sum.c).reduce((a,b)=>a+b,0); sum.oa=sum.total-sum.c.closed;
+    data = {
+      all:{t:sum, b:bench&&tally(bench), label:`${y1}–${y2}`},
+      last:{t:yrs[yrs.length-1], b:benchLast&&tally(benchLast), label:String(y2)},
+      yrs, url:mainUrl
+    };
+    render();
+    const scope = [publisher?publisher.name:"Tous éditeurs", $("country").value?$("country").selectedOptions[0].text:"Monde", `${y1}–${y2}`].join(" · ");
+    setStatus(`${scope} — mis à jour le ${new Date().toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}`);
+  }catch(err){ if(id===runId){ setStatus(err.message||"Impossible de joindre OpenAlex.",true); data=null; $("yearChart").innerHTML=""; } }
+  finally{ if(id===runId) $("results").classList.remove("busy"); }
+}
+
+let data=null, scope="last";
+function setScope(s){
+  scope=s; $("scopeLast").setAttribute("aria-pressed",s==="last"); $("scopeAll").setAttribute("aria-pressed",s==="all");
+  if(data){ render(); syncUrl(); }
+}
+$("scopeLast").addEventListener("click",()=>setScope("last"));
+$("scopeAll").addEventListener("click",()=>setScope("all"));
+
+const frac = (x,y) => `${nf.format(x)} / ${nf.format(y)}`;
+function render(){
+  const {t,b,label} = data[scope], url=data.url;
+  document.querySelectorAll("[data-when]").forEach(el=>el.textContent=`(${label})`);
+  $("kRate").textContent = t.total ? pf(t.oa/t.total) : "–";
+  $("kRateSub").textContent = t.total ? `${frac(t.oa,t.total)} publications ouvertes` : "Aucune publication pour ces filtres";
+  $("kTotal").textContent = nf.format(t.total);
+  $("kTotalSub").textContent = publisher ? publisher.name : "Tous éditeurs";
+  if(b){
+    $("kBench").textContent = b.total ? pf(b.oa/b.total) : "–";
+    const diff = t.total&&b.total ? (t.oa/t.total - b.oa/b.total)*100 : null;
+    $("kBenchSub").textContent = diff===null ? "" : `${frac(b.oa,b.total)} · ${diff>=0?"+":"−"}${Math.abs(diff).toLocaleString("fr-FR",{maximumFractionDigits:1})} pt pour l'éditeur`;
+  }else{ $("kBench").textContent="–"; $("kBenchSub").textContent="Choisissez un éditeur pour comparer"; }
+  $("decBody").innerHTML = STATUSES.map(s=>`<tr><td><span class="sw" style="background:var(--${s.k})"></span>${s.n}</td><td>${nf.format(t.c[s.k])}</td><td>${t.total?pf(t.c[s.k]/t.total):"–"}</td><td class="def">${s.d}</td></tr>`).join("") +
+    `<tr><td><strong>Total</strong></td><td><strong>${nf.format(t.total)}</strong></td><td>100 %</td><td class="def">Dont accès ouvert : ${t.total?`${pf(t.oa/t.total)} (${frac(t.oa,t.total)})`:"–"}</td></tr>`;
+  renderChart(data.yrs);
+  $("apiUrl").innerHTML = `<a href="${url}" target="_blank" rel="noopener">${esc(url)}</a>`;
+}
+
+function renderChart(yrs){
+  const ticks=[0,25,50,75,100];
+  const vc=$("yearChart");
+  const short = yrs.length>10, pr = v => short ? Math.round(v*100)+" %" : pf(v);
+  vc.style.setProperty("--minw", yrs.length>8 ? `${yrs.length*34+48}px` : "0");
+  vc.innerHTML =
+    `<div class="yaxis">${ticks.map(v=>`<span style="bottom:${v}%">${v} %</span>`).join("")}</div>` +
+    `<div class="plot">${ticks.slice(1).map(v=>`<div class="grid" style="bottom:${v}%"></div>`).join("")}` +
+    yrs.map(r=>`<div class="col">` +
+      (r.total ? STATUSES.map(s=>{
+        const v=r.c[s.k]; if(!v) return "";
+        return `<div class="seg-v" tabindex="0" style="height:${v/r.total*100}%;background:var(--${s.k})" data-tip="${esc(`<b>${r.y} · ${s.n}</b>${nf.format(v)} publications<br>${pf(v/r.total)} (${frac(v,r.total)})`)}" aria-label="${r.y}, ${s.n} : ${nf.format(v)} publications, ${pf(v/r.total)}"></div>`;
+      }).join("") : "") +
+      `<span class="rate" data-tip="${esc(r.total?`<b>${r.y} · Accès ouvert</b>${nf.format(r.oa)} publications<br>${pf(r.oa/r.total)} (${frac(r.oa,r.total)})`:`<b>${r.y}</b>Aucune publication`)}">${r.total?pr(r.oa/r.total):"–"}</span>` +
+    `</div>`).join("") + `</div>` +
+    `<div class="xlab">${yrs.map(r=>`<span>${r.y}</span>`).join("")}</div>`;
+}
+
+// --- infobulles (survol, focus clavier, toucher)
+const tip=$("tip");
+function showTip(el,x,y){
+  tip.innerHTML=el.dataset.tip; tip.hidden=false;
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let left=x+14, top=y-h-12;
+  if(left+w>innerWidth-8) left=x-w-14;
+  if(left<8) left=8;
+  if(top<8) top=y+16;
+  tip.style.left=left+"px"; tip.style.top=top+"px";
+}
+function hideTip(){ tip.hidden=true; }
+$("yearChart").addEventListener("pointermove",e=>{ const el=e.target.closest("[data-tip]"); el?showTip(el,e.clientX,e.clientY):hideTip(); });
+$("yearChart").addEventListener("pointerdown",e=>{ const el=e.target.closest("[data-tip]"); el?showTip(el,e.clientX,e.clientY):hideTip(); });
+$("yearChart").addEventListener("pointerleave",hideTip);
+$("yearChart").addEventListener("focusin",e=>{ const el=e.target.closest("[data-tip]"); if(el){ const r=el.getBoundingClientRect(); showTip(el,r.left+r.width/2,r.top); }});
+$("yearChart").addEventListener("focusout",hideTip);
+addEventListener("scroll",hideTip,{passive:true});
+$("legend").innerHTML = STATUSES.map(s=>`<span><span class="sw" style="background:var(--${s.k})"></span>${s.n}</span>`).join("");
+
+// --- lien partageable (paramètres dans l'URL)
+function syncUrl(){
+  const p = new URLSearchParams();
+  p.set("pub", publisher ? publisher.id : "all"); if(publisher) p.set("pubname", publisher.name);
+  if($("country").value) p.set("pays",$("country").value);
+  p.set("de",$("y1").value); p.set("a",$("y2").value);
+  if($("articlesOnly").checked) p.set("types","articles");
+  if(scope==="all") p.set("vue","periode");
+  try{ history.replaceState(null,"","?"+p.toString()); }catch(e){}
+}
+(function readUrl(){
+  const p = new URLSearchParams(location.search);
+  if(p.get("pub")==="all") publisher=null;
+  else if(p.get("pub")) publisher={id:p.get("pub"),name:p.get("pubname")||p.get("pub")};
+  $("pubInput").value = publisher ? publisher.name : "";
+  if(p.get("pays")) $("country").value=p.get("pays");
+  if(p.get("de")) $("y1").value=p.get("de");
+  if(p.get("a")) $("y2").value=p.get("a");
+  if(p.get("types")==="articles") $("articlesOnly").checked=true;
+  if(p.get("vue")==="periode") setScope("all");
+})();
+$("share").addEventListener("click", async()=>{
+  syncUrl();
+  try{ await navigator.clipboard.writeText(location.href); setStatus("Lien copié : il rouvre cette vue avec les mêmes filtres."); }
+  catch(e){ setStatus(location.href); }
+});
+["country","y1","y2","articlesOnly"].forEach(id=>$(id).addEventListener("change",run));
+let yt; ["y1","y2"].forEach(id=>$(id).addEventListener("input",()=>{ clearTimeout(yt); const v=$(id).value; if(/^\d{4}$/.test(v)) yt=setTimeout(run,600); }));
+$("run").addEventListener("click",run);
+renderChips(); run();
+</script>
+</body>
+</html>
